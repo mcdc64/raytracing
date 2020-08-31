@@ -1,3 +1,5 @@
+# Cian McDonnell 2020
+# Feel free to use or edit this code as you wish, but please credit me as the creator.
 import numpy as np
 from PIL import Image
 import time

@@ -56,11 +56,13 @@ class Sphere:
         
 class Plane:
     def __init__(self,point,normal,material,texture_path = None,second_point = np.array([0,0,0]),tex_size = 100):
-        self.point = point
-        self.normal = normalise(normal)
-        self.d = np.dot(self.point,self.normal)
-        self.material = material
-        self.texture_image = np.array([0])
+        self.point = point #a point in the plane
+        self.normal = normalise(normal)#a vector that is normal to the plane
+        self.d = np.dot(self.point,self.normal)#the constant that appears on the RHS in the equation defining the plane. Used to check which side of the plane a given point is on.
+        
+        self.material = material #the plane material.
+        self.texture_image = np.array([0]) #the texture image to use (this is a default value).
+        
         self.second_point = second_point #get the second point so we can define some orthogonal vectors in the plane for texture mapping. This point must also be in the plane (make this user-proof later)
         #second_point seems to work best if it is "above" the first point in the plane (so that second_point-first_point is a vector pointing whichever way "up" is in the texture image)
         
@@ -75,11 +77,13 @@ class Plane:
         self.tex_vec_1 = normalise(self.second_point-self.point) #these will be our "coordinate axes" for mapping pixels in a texture file to points on the plane
         self.tex_vec_2 = -np.cross(normal,self.tex_vec_1) #if tex_vec_1 is the x-axis, using the minus sign makes this a y-axis that points up.
         self.tex_size = tex_size #a tex_size of 100 means that 100 pixels in a texture image correspond to 1 unit in the scene space.
-        if(not(texture_path is None)):
+        
+        if(not(texture_path is None)): #try to get the texture image if one is given.
             try:
                 self.texture_image = np.asarray(Image.open(texture_path,mode="r"))
             except FileNotFoundError:
                 print("File not found: "+texture_path+", continuing using default colour of object")
+                
     def get_normal(self,point):
         return self.normal
         
@@ -96,25 +100,25 @@ class Plane:
             
         return self.material.color
         
-    def intersects(self,ray):
+    def intersects(self,ray): #maths to find the point of intersection of the plane with a ray. 
         if (np.dot(ray.direction,self.normal)==0):
             return [0,0,False,False]
         t_int = (self.d - np.dot(self.normal,ray.source))/np.dot(self.normal,ray.direction)
         if(t_int<0):
             return [0,0,False,False]
-        return [t_int,t_int,True,True]
+        return [t_int,t_int,True,True] #return two values of t for consistency, since the sphere "intersects" method also returns two values of t.
         
-    def contains(self,check_point):
+    def contains(self,check_point): #check if a point is "inside" the plane.
         if np.dot(check_point,self.normal)<=self.d:
             return True
         return False
 
 class SphereSlice: #a sphere with some of the surface cut away. Useful to make mirrors, specifically concave ones.        
     def __init__(self,edge_centre,radius,pole_dir,max_edge_dist,material):
-        self.edge_centre = edge_centre
-        self.radius = radius
+        self.edge_centre = edge_centre #the centre of the slice (NOT the centre of the sphere it is "cut" from).
+        self.radius = radius #radius of the underlying sphere.
         self.material = material
-        self.unit_pole = normalise(pole_dir)# a unit vector that points in the direction of the edge of the sphere (at the centre of the slice) to the centre of the actual sphere.
+        self.unit_pole = normalise(pole_dir)# a unit vector that points in the direction from the edge of the sphere (at the centre of the slice) to the centre of the actual sphere.
         self.pole = self.unit_pole*self.radius #by multiplying the unit pole by the radius, we get a vector that is actually *equal* to the centre of the sphere minus the centre of the slice.
         self.sphere_centre = self.edge_centre+self.pole #the centre of the underlying sphere.
         self.max_edge_dist = max_edge_dist #the distance from the point at the center of the slice, towards the sphere center, at which the slice gets cut off. 
@@ -136,9 +140,9 @@ class SphereSlice: #a sphere with some of the surface cut away. Useful to make m
         t_1 = (-b + np.sqrt(discriminant))/(2*a)
 
         cutoff_0 = self.cutoff_plane.contains(ray.get_point(t_0)) #use the cutoff plane to check if these t-values should be rendered as part of the slice
-        cutoff_1 = self.cutoff_plane.contains(ray.get_point(t_1))
+        cutoff_1 = self.cutoff_plane.contains(ray.get_point(t_1)) #if the plane contains the points, they should be rendered.
         
-        if(cutoff_0 and cutoff_1):
+        if(cutoff_0 and cutoff_1): #return the t-values depending on whether or not they were cut off.
             return [t_0,t_1,True,True]
         elif(cutoff_0 and (not cutoff_1)):
             return [t_0,0,True,False]
