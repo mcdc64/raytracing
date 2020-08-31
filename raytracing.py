@@ -3,7 +3,6 @@
 import numpy as np
 from PIL import Image
 import time
-import threading
 
 from classes import Ray,Sphere,Plane,SphereSlice,Material #all the classes defined for the project in another file
 
